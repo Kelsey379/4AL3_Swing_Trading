@@ -1,0 +1,13 @@
+#env setup
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# secrets
+.env
+*credentials*.json
+
+#pulled/modified data path
+data/
