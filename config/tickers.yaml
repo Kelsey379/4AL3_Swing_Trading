@@ -1,0 +1,12 @@
+groups: # prob gonna need 75+ total for 1000+ dta points
+  1:  # chose tech/comms tickers for this one (liquid/popular on reddit)
+    [AAPL, MSFT, NVDA, AMD, TSLA, AMZN, META, GOOGL, NFLX, AVGO, INTC, PLTR, MU, CRM, ORCL, ADBE, QCOM,
+     TSM, MRVL, ARM, SMCI, CRWD, PANW, SHOP, DELL, IBM]
+  2: 
+    []
+  3:
+    []
+
+benchmarks: [SPY, QQQ] # sample baselines buy/hold
+
+macro: ["^VIX"]

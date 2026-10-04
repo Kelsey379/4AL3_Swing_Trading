@@ -1,0 +1,29 @@
+#one config for all tickers
+data:
+  # lookback+warmup<= 729 yahoo limit
+  lookback_days: 665
+  warmup_days: 60 
+
+
+indicators:
+  ema_fast: 20 #moxing average price to pull back to
+  sma_trend: 50 #filter trends
+  atr: 14
+  rsi: 14
+
+
+
+
+detector:
+  trend_slope_bars: 10 
+  pullback_lookback_bars: 3 
+  touch_tol: 0.005 
+  rsi_max_during_pullback: 55 
+
+
+
+labels:
+  stop_atr: 1.5 
+  target_atr: 3.0  
+  horizon_bars: 10 # 5 trade days
+  one_position_per_ticker: true # prevent duplicate setups
