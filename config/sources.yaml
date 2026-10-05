@@ -1,0 +1,4 @@
+gdelt:
+  project: swingtrading4al3
+  events_table: gdelt-bq.gdeltv2.events_partitioned
+  max_bytes_billed: 10000000000

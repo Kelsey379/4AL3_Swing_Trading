@@ -15,6 +15,9 @@ def load_yaml(name):
 def load_strategy():
     return load_yaml("strategy.yaml")
 
+def load_sources():
+    return load_yaml("sources.yaml")
+
 
 def tickers_for(group): # group 1, 2, 3, all
     groups = load_yaml("tickers.yaml")["groups"]

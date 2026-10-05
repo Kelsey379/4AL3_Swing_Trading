@@ -4,3 +4,6 @@ pyarrow==25.0.1
 PyYAML==6.0.3
 yfinance==1.7.0
 pytest==9.1.1
+google-cloud-bigquery==3.46.1
+db-dtypes==1.7.2
+python-dotenv==1.2.4
