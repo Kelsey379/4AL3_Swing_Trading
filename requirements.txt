@@ -3,6 +3,4 @@ pandas==3.0.6
 pyarrow==25.0.1
 PyYAML==6.0.3
 yfinance==1.7.0
-praw==8.0.3
-vaderSentiment==3.3.2
 pytest==9.1.1
