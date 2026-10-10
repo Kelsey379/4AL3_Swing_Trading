@@ -2,8 +2,9 @@ groups: # prob gonna need 75+ total for 1000+ dta points
   1:  # chose tech/comms tickers for this one (liquid/popular on reddit)
     [AAPL, MSFT, NVDA, AMD, TSLA, AMZN, META, GOOGL, NFLX, AVGO, INTC, PLTR, MU, CRM, ORCL, ADBE, QCOM,
      TSM, MRVL, ARM, SMCI, CRWD, PANW, SHOP, DELL, IBM]
-  2: 
-    []
+  2:  # entertainment, news, aerospace/defence, real estate 
+    [DIS, LYV, FOXA, SKYD, SIRI, ROKU, FWONK, NWSA, TKO, VMRK, EQR, ESS, SUI, INVH, MAA, CPT, 
+     SPCX, GE, RTX, BA, LMT, HWM, GD, TDG, HONA]
   3:
     [JPM, BAC, GS, MS, WFC, C, SCHW, V, MA, XOM, CVX, OXY, COP, SLB, EOG, MPC,
      UNH, LLY, PFE, JNJ, ABBV, MRK, AMGN, TMO, MRNA]
