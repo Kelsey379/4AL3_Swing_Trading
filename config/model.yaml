@@ -1,0 +1,21 @@
+# xgboost settings, split proposed for now (arbitrary)
+
+# only cols the detector already outputs, features and macros still to be added
+features: [rsi, atr_pct, dist_ema, dist_sma, trend_gap, afternoon]
+
+split:
+  test_frac: 0.2      # last 20% of setups by time = final test
+  embargo_days: 3     # train trades have to close beforetest/val window 
+  n_folds: 4          # walk forward folds in train for tuning
+
+threshold: 0.5        # prob >= this =predict win
+
+xgb:                  # fixed settings, tunes grid below
+  subsample: 0.8
+  colsample_bytree: 0.8
+
+grid:
+  max_depth: [2, 3, 4]
+  learning_rate: [0.03, 0.1]
+  n_estimators: [100, 300]
+  min_child_weight: [5, 20]
