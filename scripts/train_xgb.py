@@ -19,6 +19,9 @@ def main():
     sc= mcfg["split"]
     feats = mcfg["features"]
     df = load_dataset(args.group)
+    missing = [f for f in feats if f not in df.columns]
+    if missing: # macro cols only there if build_macro_features ran for the same group
+        raise SystemExit(f"missing features {missing}, run python -m scripts.build_macro_features --group {args.group}")
     print(f"{len(df)} labeled setups, {df['label'].mean():.1%} wins, "
           f"{df['signal_time'].min():%Y-%m-%d} to {df['signal_time'].max():%Y-%m-%d}")
 

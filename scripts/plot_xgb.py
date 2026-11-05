@@ -35,7 +35,10 @@ def plot_correlation(train, feats, out): #heatmap
 
 
 def plot_features_by_label(train, feats, out): # lfeature vs target box plot
-    fig, axes = plt.subplots(2, 3, figsize=(14, 8))
+    rows = int(np.ceil(len(feats) / 3))  # 2x3 only fit the 6 detector feats, macro ones got cut off
+    fig, axes = plt.subplots(rows, 3, figsize=(14, 4 * rows))
+    for ax in axes.flat[len(feats):]:
+        ax.set_visible(False)
     # for ax, f in zip(axes.flat, feats):  
     #     sn.boxplot(data=train, x="label", y=f, ax=ax, showfliers=False)
     for ax, f in zip(axes.flat, feats):

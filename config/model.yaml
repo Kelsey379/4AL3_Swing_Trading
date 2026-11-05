@@ -2,6 +2,8 @@
 
 # only cols the detector already outputs, features and macros still to be added
 features: [rsi, atr_pct, dist_ema, dist_sma, trend_gap, afternoon]
+# once gdelt pulled:
+# vix_close, vix_chg_5d, vix_vs_ma20, gdelt_tone_72h, gdelt_goldstein_72h, gdelt_us_tone_72h, gdelt_tone_chg, gdelt_volume_ratio
 
 split:
   test_frac: 0.2      # last 20% of setups by time = final test
