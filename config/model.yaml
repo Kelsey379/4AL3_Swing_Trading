@@ -1,7 +1,8 @@
 # xgboost settings, split proposed for now (arbitrary)
 
 # only cols the detector already outputs, features and macros still to be added
-features: [rsi, atr_pct, dist_ema, dist_sma, trend_gap, afternoon]
+features: [rsi, atr_pct, dist_ema, dist_sma, trend_gap, afternoon,
+           macd_pct, macd_hist_pct, macd_hist_chg, vol_long, vol_ratio, rel_volume, pullback_volume]  # 2nd row = technical.py
 # once gdelt pulled:
 # vix_close, vix_chg_5d, vix_vs_ma20, gdelt_tone_72h, gdelt_goldstein_72h, gdelt_us_tone_72h, gdelt_tone_chg, gdelt_volume_ratio
 

@@ -37,6 +37,14 @@ def rsi(close, n):
     return 100 - 100 / (1 + avg_gain / avg_loss)
 
 
+# macd = fast ema - slow ema, signal = ema of that, hist = gap b/t them
+# hist going up during pullback = selling slowing down
+def macd(close, fast=12, slow=26, signal=9):
+    line = ema(close, fast) - ema(close, slow)
+    sig = line.ewm(span=signal, adjust=False, min_periods=signal).mean()
+    return line, sig, line - sig
+
+
 # adds all 4 indicator columns to a ticker's ohlcv df, periods come from strategy.yaml
 # columns are named after the config keys (not ema20 etc) so changing a period doesnt break the detector
 # first n-1 rows of each column are nan since theres not enough history yet (warmup_days covers this)

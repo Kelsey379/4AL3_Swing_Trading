@@ -22,6 +22,16 @@ detector:
 
 
 
+technical: # extra model features only, detector doesnt use these (features/technical.py)
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  vol_short: 5 # bars, realized vol short vs long = vol expanding or not
+  vol_long: 20
+  volume_lookback: 20 # same session bars only, morning bar is 4h and afternoon 2.5h so cant mix
+
+
+
 labels:
   stop_atr: 1.5 
   target_atr: 3.0  

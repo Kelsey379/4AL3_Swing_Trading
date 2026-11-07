@@ -3,6 +3,7 @@ import pandas as pd
 
 from common.config import PROCESSED_DIR, load_strategy, tickers_for
 from data_collection.ohlcv import TZ, drop_incomplete, load_cached_hourly, resample_4h
+from features.technical import build_technical_features
 from labeling.detector import detect_ma_pullbacks
 from labeling.labeler import drop_overlapping, label_setups, summarize
 
@@ -22,7 +23,9 @@ def build(tickers, cfg, now):
         bars = drop_incomplete(resample_4h(hourly), now)
         setups= detect_ma_pullbacks(bars, cfg, t, start=window_start)
         if len(setups):
-            parts.append(label_setups(setups, bars, cfg, hourly=hourly))
+            lab = label_setups(setups, bars, cfg, hourly=hourly)
+            tech = build_technical_features(bars.assign(ticker=t), setups, cfg)  # macd/vol/volume cols for the model
+            parts.append(lab.merge(tech, on="setup_id", how="left"))
 
     if not parts:
         return pd.DataFrame()

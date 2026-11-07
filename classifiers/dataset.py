@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from common.config import PROCESSED_DIR
 
@@ -21,9 +22,17 @@ def add_macro_features(setups, group): #joins macro_g{group}.parquet (scripts.bu
     return setups.merge(m, on="setup_id", how="left")
 
 
+def clean_dataset(d, feats=None): # infs to NaN, dupes out. NaNs stay, xgb/lgbm handle them fine
+    d = d.drop_duplicates("setup_id", keep="last").copy()
+    feats = feats or [c for c in d.columns if pd.api.types.is_float_dtype(d[c])]
+    d[feats] = d[feats].replace([np.inf, -np.inf], np.nan)
+    return d
+
+
 def load_dataset(group="all"): # labeled setups w oldest first
     d = pd.read_parquet(PROCESSED_DIR / f"setups_g{group}.parquet")
     d= d[d["label"].notna()].copy()
     d["label"] = d["label"].astype(int)
     d = add_macro_features(d, group)
-    return add_basic_features(d).sort_values("signal_time").reset_index(drop=True)
+    d = clean_dataset(add_basic_features(d))
+    return d.sort_values("signal_time").reset_index(drop=True)
