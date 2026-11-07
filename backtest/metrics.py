@@ -33,9 +33,9 @@ def sharpe(trades): # annualized
     return float(d.mean()/d.std() * np.sqrt(TRADING_DAYS))
 
 
-def equity_curve(trades): #total of R after each trade closes
-    t = _closed(trades)
-    return pd.Series(t["ret_R"].astype(float).cumsum().to_numpy(), index=t["exit_time"].to_numpy())
+def equity_curve(trades): #total of R after each exit time, same time exits added together so order cant change drawdown
+    net = _closed(trades).groupby("exit_time")["ret_R"].sum().astype(float)
+    return pd.Series(net.cumsum().to_numpy(), index=net.index.to_numpy())
 
 
 def max_drawdown(trades): # biggest drop from a peak in R

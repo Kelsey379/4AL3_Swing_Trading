@@ -22,6 +22,13 @@ def add_macro_features(setups, group): #joins macro_g{group}.parquet (scripts.bu
     return setups.merge(m, on="setup_id", how="left")
 
 
+def add_relative_features(setups, group): # joins rel_g{group}.parquet (scripts.build_relative_features), same as macro
+    path = PROCESSED_DIR / f"rel_g{group}.parquet"
+    if not path.exists():
+        return setups
+    return setups.merge(pd.read_parquet(path).drop(columns="rel_data_time"), on="setup_id", how="left")
+
+
 def clean_dataset(d, feats=None): # infs to NaN, dupes out. NaNs stay, xgb/lgbm handle them fine
     d = d.drop_duplicates("setup_id", keep="last").copy()
     feats = feats or [c for c in d.columns if pd.api.types.is_float_dtype(d[c])]
@@ -34,5 +41,6 @@ def load_dataset(group="all"): # labeled setups w oldest first
     d= d[d["label"].notna()].copy()
     d["label"] = d["label"].astype(int)
     d = add_macro_features(d, group)
+    d = add_relative_features(d, group)
     d = clean_dataset(add_basic_features(d))
     return d.sort_values("signal_time").reset_index(drop=True)

@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 import pandas as pd
+from classifiers.splits import walk_forward_folds
 from sklearn.metrics import average_precision_score, confusion_matrix, precision_score, recall_score, roc_auc_score
 from xgboost import XGBClassifier
 
@@ -65,3 +66,22 @@ def tune_model(X, y, folds, base_params, grid): # try every combo, score = mean 
     best = {**base_params, **{k: results.loc[0, k] for k in keys}}
     best = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in best.items()}  
     return best, results
+
+
+def walk_forward_predict(df, feats, mcfg, n_windows=8, inner_folds=3, min_train=250): # out of sample prob for most setups, not just last 20%
+    # train on everything before each window (purged), tune again inside that train only, predict the window
+    emb = mcfg["split"]["embargo_days"]
+    X, y = df[feats].to_numpy(dtype=float), df["label"].to_numpy()
+    parts = []
+    for k, (tr, te) in enumerate(walk_forward_folds(df, n_windows, emb), 1):
+        if len(tr) < min_train: # too little history to learn anything yet
+            continue
+        sub = df.iloc[tr].reset_index(drop=True)
+        best, _ = tune_model(X[tr], y[tr], walk_forward_folds(sub, inner_folds, emb), mcfg["xgb"], mcfg["grid"])
+        model = training(X[tr], y[tr], best)
+        parts.append(pd.DataFrame({"setup_id": df["setup_id"].iloc[te].to_numpy(), "window": k,
+                                   "prob": model.predict_proba(X[te])[:,1],
+                                   "n_train": len(tr), "train_last_exit": df["exit_time"].iloc[tr].max()}))
+    if not parts:
+        raise ValueError("no window had enough training setups, lower min_train")
+    return pd.concat(parts, ignore_index=True)

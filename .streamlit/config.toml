@@ -1,0 +1,12 @@
+# plain theme for the dashboard
+[theme]
+base = "light"
+primaryColor = "#1f4e79"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f1f1ee"
+textColor = "#1b1b1b"
+font = "sans-serif"
+baseRadius = "none"
+
+[client]
+toolbarMode = "minimal"

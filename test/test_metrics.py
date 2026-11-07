@@ -41,6 +41,14 @@ def test_max_drawdown_first_trade_loss():
     assert np.isclose(max_drawdown(trades([-1.0, 2.0])), 1.0)
 
 
+def test_same_time_exits_dont_depend_on_order():
+    t = pd.Timestamp("2026-09-01 16:00", tz="America/New_York")
+    a = pd.DataFrame({"exit_time": [t, t, t + pd.Timedelta(days=1)], "ret_R": [2.0, -1.0, -1.0]})
+    b = a.iloc[[1, 0, 2]]
+    assert equity_curve(a).tolist() == [1.0, 0.0]
+    assert np.isclose(max_drawdown(a), 1.0) and np.isclose(max_drawdown(b), 1.0)
+
+
 def test_no_drawdown_if_only_wins():
     assert max_drawdown(trades([1.0, 2.0, 0.5])) == 0
 

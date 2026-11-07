@@ -27,8 +27,9 @@ def save(fig, out, name):
 
 
 def plot_correlation(train, feats, out): #heatmap
-    fig, ax = plt.subplots(figsize=(8, 6))
-    sn.heatmap(train[feats + ["label"]].corr(), annot=True, fmt=".3f", ax=ax)
+    n = len(feats) + 1
+    fig, ax = plt.subplots(figsize=(max(8, 0.8 * n), max(6, 0.65 * n)))  # numbers overlapped once macro feats added
+    sn.heatmap(train[feats + ["label"]].corr(), annot=True, fmt=".2f", annot_kws={"size": 8}, ax=ax)
     # ax.imshow(train[feats + ["label"]].corr(), cmap="coolwarm") 
     ax.set_title("Feature correlation (train)")
     save(fig, out, "feature_correlation.png")
@@ -77,14 +78,15 @@ def plot_convergence(train, feats, best, sc, out): # pr_auc per tree for last fo
     save(fig, out, "convergence.png")
 
 
-def plot_folds(tuning, base_rate, out): 
+def plot_folds(tuning, base_rates, out): # each fold has its own base rate
     folds = [c for c in tuning.columns if c.startswith("fold_")]
     fig, ax = plt.subplots(figsize=(7, 4))
 
 
 
     ax.bar(range(1, len(folds) + 1), tuning.loc[0, folds].to_numpy(dtype=float))
-    ax.axhline(base_rate, color="gray", linestyle="--", label="base rate")
+    x = np.arange(1, len(folds) + 1)
+    ax.hlines(base_rates, x - 0.4, x + 0.4, color="gray", linestyle="--", label="fold base rate")
     ax.set(title="Best setting PR-AUC per walk forward fold", xlabel="Fold", ylabel="PR-AUC",
            ylim=(0, 0.5), xticks=range(1, len(folds) + 1))
     ax.legend()
@@ -133,7 +135,7 @@ def plot_prob_hist(test, threshold, out): # wins higher probs than losses?
     ax.hist(test.loc[test["label"] == 0, "prob"], bins=bins, alpha=0.5, label="Loss")
     ax.hist(test.loc[test["label"] == 1, "prob"], bins=bins, alpha=0.5, label="Win")
     ax.axvline(threshold, color="red", linestyle=":", label="threshold")
-    ax.set(xlabel="Predicted win probability", ylabel="Setups", title="Test predictions by actual outcome")
+    ax.set(xlabel="Model score (not a real win chance)", ylabel="Setups", title="Test predictions by actual outcome")
     ax.legend()
     save(fig, out, "prob_hist.png")
 
@@ -186,7 +188,8 @@ def main():
     plot_correlation(train, feats, out)
     plot_features_by_label(train, feats, out)
     plot_convergence(train, feats, results["best_params"], sc, out)
-    plot_folds(tuning, train["label"].mean(), out)
+    y = train["label"].to_numpy()
+    plot_folds(tuning, [y[v].mean() for _, v in walk_forward_folds(train, sc["n_folds"], sc["embargo_days"])], out)
     plot_top_settings(tuning, list(mcfg["grid"]), out)
     plot_confusion(test, thr, out)
     plot_pr_curve(test, out)
