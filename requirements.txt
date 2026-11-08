@@ -12,3 +12,4 @@ xgboost==3.4.1
 matplotlib==3.11.2
 seaborn==0.13.2
 streamlit==1.66.1
+lightgbm==4.7.0

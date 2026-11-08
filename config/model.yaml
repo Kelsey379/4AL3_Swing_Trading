@@ -27,3 +27,16 @@ grid:
   learning_rate: [0.03, 0.1]
   n_estimators: [100, 300]
   min_child_weight: [5, 20]
+
+lgbm:                 # fixed settings, tuned grid below
+  subsample: 0.8
+  subsample_freq: 1   # lightgbm ignores `subsample` unless this is >= 1
+  colsample_bytree: 0.8
+  force_row_wise: true
+  deterministic: true
+ 
+lgbm_grid:
+  num_leaves: [4, 8, 16]      # 2^max_depth leaves (the xgboost depths 2-4)
+  learning_rate: [0.03, 0.1]
+  n_estimators: [100, 300]
+  min_child_samples: [10, 20, 40]
