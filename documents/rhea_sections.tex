@@ -1,0 +1,174 @@
+\section{Introduction}
+
+The Swing Trading Strategy Analyzer tests if machine learning can help decide whether a setup is strong or weak for the moving-average pullback strategy specifically. A rule-based detector scans 4-hour bars across 76 stocks. It flags a setup when a stock is trending above the 50-bar simple moving average (SMA), then pulls back into its 20-bar exponential moving average (EMA), and then continues moving up.
+
+The machine learning model gives each setup a probability of being successful. Every trade has a stop loss $1.5\times$ the average true range (ATR) under the entry and a profit target $3\times$ the ATR above it, with a 10-bar time limit. A success means the target is reached before the stop loss is hit and before the time limit is over. The model uses price action features and macro features influenced by the overall market. Features include news tone from GDELT and the VIX volatility index.
+
+The problem is difficult for 3 reasons:
+\begin{enumerate}
+  \item There is a lot of noise in the market, so good models can often be wrong.
+  \item Financial machine learning results can be inflated by leakage, where a feature accidentally uses information from after the trade decision.
+  \item News data comes from a different source than the price data, so it has to be lined up carefully in time.
+\end{enumerate}
+
+Because of this, we aren't aiming for a super accurate model. We're aiming for one that's correct and doesn't leak. The project is a success if filtering setups with the model gives better trading results than taking every setup the detector finds, or than just buying and holding.
+
+\section{Related Work}
+
+\citet{krauss2017deep} compared deep neural networks, gradient boosted trees and random forests for trading S\&P~500 stocks. Each model predicted the chance a stock would beat the market the next day, using past returns from 1992 to 2015. Their combined models made strong returns before transaction costs. Profits dropped in the later years though, and were sometimes negative. This supports our choice of gradient boosted trees for tabular financial data, and of judging models on trading results and not just accuracy. The drop in profits also shows that an edge can fade over time, which is why we use walk-forward validation instead of one fixed split. Our project is narrower: we score one specific setup instead of ranking the whole market every day.
+
+\citet{lo2000foundations} were some of the first to properly test technical analysis. They turned chart patterns like head-and-shoulders into automatic rule-based detectors using kernel regression. Then they checked whether returns after a pattern were different from normal returns across U.S.\ stocks from 1962 to 1996. They found that several technical indicators do carry some extra information. Our detector follows the same idea, turning a visual trading pattern into exact rules that can be tested. We take it one step further and ask whether adding technical and macro context helps predict which setups actually work.
+
+\section{Features}
+
+Each setup is one row of tabular data with 21 hand-made features. They go straight into the tree models, with no embeddings or neural network. Stock prices vary a lot (a \$40 stock vs a \$900 stock), so every price-based feature is turned into a percentage or ratio. That way all tickers are on the same scale.
+
+\paragraph{Detector features (6).} These are scaled versions of values the detector already calculates at the signal bar:
+\begin{itemize}
+  \item RSI
+  \item ATR as a percent of price
+  \item how far the close is above the EMA20
+  \item how far the close is above the SMA50
+  \item trend strength (how far the EMA20 is above the SMA50)
+  \item whether the signal came on the morning or afternoon bar
+\end{itemize}
+
+\paragraph{Technical features (7).} These add information the detector doesn't use:
+\begin{itemize}
+  \item MACD line and histogram (12/26/9), divided by the close price
+  \item change in the MACD histogram over the 3 pullback bars, where positive means momentum is turning back up
+  \item 20-bar volatility of log returns
+  \item 5-bar vs 20-bar volatility ratio, where above 1 means volatility is rising
+  \item signal bar volume compared to the average of the last 20 bars from the same session (the morning bar is 4 hours and the afternoon bar is 2.5 hours, so they can't be mixed)
+  \item average relative volume during the pullback, where low means a quiet dip and not heavy selling
+\end{itemize}
+
+\paragraph{Macro features (8).} These describe the overall market mood when the signal fires:
+\begin{itemize}
+  \item VIX: the latest close, its 5-day change, and its distance from its 20-day average
+  \item GDELT, from the 72 hours before the signal bar closes:
+  \begin{itemize}
+    \item average news tone
+    \item average Goldstein score (a scale from conflict to cooperation)
+    \item average tone of U.S.\ events
+    \item change in tone (last 24 hours vs the 48 hours before)
+    \item news volume ratio (last 24 hours vs the 48 hours before)
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Leakage prevention.} Every feature can only use information available when the signal bar closes, since the trade enters at the next bar's open.
+\begin{itemize}
+  \item Each feature table saves the timestamp of the newest data it used, and a check makes sure none of them are later than the signal bar's close.
+  \item The VIX daily close only counts as available from the next day.
+  \item A GDELT hour only counts once it's fully over.
+  \item We also run a truncation test. It cuts the raw data off right after random setups, rebuilds the features, and checks that values for earlier setups don't change. If they did, the feature would be using future data.
+  \item Separate checks were run for the technical and macro features.
+\end{itemize}
+
+\paragraph{Feature selection.} We also tested relative strength features against SPY: a 20-bar relative return, a short-term relative return, and a rank across tickers. They didn't improve the walk-forward results, so we left them out. The effect of each feature group is shown in the ablation in the Implementation section.
+
+Figure~\ref{fig:importance} shows the XGBoost feature importance.
+
+\begin{figure}[t]
+  \includegraphics[width=\columnwidth]{feature_importance.png}
+  \caption{XGBoost feature importance. Every feature gets about 4 to 6\% of the gain with no standout, which fits with there being no strong signal. The afternoon flag gets close to 0.}
+  \label{fig:importance}
+\end{figure}
+
+\section{Results and Evaluation}
+
+\paragraph{Splitting.} Setups are sorted by signal time. The last 20\% (268 setups) is the final test set and the first 80\% (1,038 setups) is for training. A random split would let the model learn from setups happening at the same time as the test ones, which inflates results. We also use a 3-day embargo: training trades have to close at least 3 days before the test window starts, so trade outcomes can't overlap the test period \citep{lopezdeprado2018advances}.
+
+\paragraph{Cross-validation.} Hyperparameters are only tuned on the training set, using expanding-window walk-forward folds.
+\begin{itemize}
+  \item The training data is split into 5 chunks in time order.
+  \item Fold $k$ trains on chunks 1 to $k$ and validates on chunk $k+1$, with the same embargo.
+  \item Settings are picked by the average PR-AUC across the 4 folds.
+\end{itemize}
+As a stronger check, a full walk-forward run retrains the model across 8 time windows over the whole history. It scores each window on data it hasn't seen.
+
+\paragraph{Classification metrics.} Only about 21\% of test setups are wins, so accuracy would be misleading. We report:
+\begin{itemize}
+  \item precision: of the setups the model calls wins, how many actually win
+  \item recall: of the actual wins, how many the model catches
+  \item PR-AUC, compared against the 21\% base rate
+  \item ROC-AUC, where 0.5 means random ranking
+  \item TSS (true skill statistic): recall minus the false positive rate, where 0 means no skill
+\end{itemize}
+
+\paragraph{Trading metrics.} Trades are measured in R, which is profit in units of the risk taken. A full win is $+2$R and a full stop out is $-1$R. We report win rate, average R per trade, Sharpe ratio and max drawdown. To compare with buy-and-hold percentage returns, each trade is assumed to risk 1\% of the account.
+
+\paragraph{Baselines.}
+\begin{itemize}
+  \item buy-and-hold SPY and QQQ
+  \item equal-weight buy-and-hold of all 76 tickers
+  \item the unfiltered detector, which takes every setup
+\end{itemize}
+The unfiltered detector is the main one. If the model can't beat it, the model isn't adding anything.
+
+\paragraph{Results so far.} Table~\ref{tab:test} shows the test set results. Neither model ranks winners above losers better than chance, and both have precision about equal to the base rate.
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{lcc}
+    \hline
+    \textbf{Test set (268 setups)} & \textbf{XGBoost} & \textbf{LightGBM} \\
+    \hline
+    ROC-AUC   & 0.49   & 0.46   \\
+    PR-AUC    & 0.21   & 0.20   \\
+    Precision & 21.1\% & 18.8\% \\
+    Recall    & 26.8\% & 26.8\% \\
+    TSS       & 0.004  & $-0.04$ \\
+    \hline
+  \end{tabular}
+  \caption{Classification results on the final test set. The base rate is 20.9\% wins.}
+  \label{tab:test}
+\end{table}
+
+During tuning, the best settings scored about 0.30 PR-AUC, compared to fold base rates of 0.20 to 0.27. That looked like a small edge, but it disappeared on the test set. Picking the best of 24 (XGBoost) or 36 (LightGBM) settings on only about 1,000 rows gives a score that's optimistic by luck. Both models also picked the largest minimum leaf size, which is what tuning does when there's little real pattern to find.
+
+Walk-forward shows the same thing (Figure~\ref{fig:wf}). Across both models and all feature sets, ROC-AUC stays between 0.49 and 0.53, and every 95\% confidence interval includes 0.5. ROC-AUC for individual windows jumps around from 0.35 to 0.74 with no steady trend, which points to luck and not an edge that holds over time.
+
+\begin{figure}[t]
+  \includegraphics[width=\columnwidth]{wf_roc_by_window_gall_compare.png}
+  \caption{Walk-forward ROC-AUC for each time window and feature set. Values stay close to 0.5.}
+  \label{fig:wf}
+\end{figure}
+
+Table~\ref{tab:backtest} shows the backtest over the roughly 90-day test window.
+\begin{itemize}
+  \item The XGBoost filter took 71 of the 268 setups.
+  \item It returned $+2.2$\% (Sharpe 0.43), compared to $+4.1$\% (Sharpe 0.47) for the unfiltered detector.
+  \item It did cut max drawdown from 18.8\% to 7.8\%, mostly because it took fewer trades.
+  \item The equal-weight buy-and-hold beat both at $+9.9$\% (Sharpe 2.11).
+\end{itemize}
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{lrrrr}
+    \hline
+    & \textbf{Return} & \textbf{Sharpe} & \textbf{Max DD} & \textbf{Trades} \\
+    \hline
+    SPY hold            & $+3.5$\% & 0.91    & 3.5\%  & --  \\
+    QQQ hold            & $-4.5$\% & $-0.53$ & 10.3\% & --  \\
+    Equal-wt hold       & $+9.9$\% & 2.11    & 3.3\%  & --  \\
+    Unfiltered detector & $+4.1$\% & 0.47    & 18.8\% & 268 \\
+    XGBoost ($p \geq 0.5$) & $+2.2$\% & 0.43 & 7.8\%  & 71  \\
+    \hline
+  \end{tabular}
+  \caption{Backtest over the final test window. Each trade risks 1\% of the account. The equal-weight hold is rebalanced daily.}
+  \label{tab:backtest}
+\end{table}
+
+The model's picks did earn slightly more per trade, 0.041R compared to 0.027R for all setups on the test set (Figure~\ref{fig:equity}). But with ROC-AUC around 0.5, this is best treated as noise. Total R was also lower (2.9R vs 7.2R) because the model took far fewer trades.
+
+\begin{figure}[t]
+  \includegraphics[width=\columnwidth]{equity_curve.png}
+  \caption{Cumulative R for model-filtered trades compared to all detector setups.}
+  \label{fig:equity}
+\end{figure}
+
+Over the full history, the unfiltered detector averaged $+0.157$R per trade across 1,315 trades. This suggests the pullback pattern itself has a small positive edge, but our current features can't predict which setups will work.
+

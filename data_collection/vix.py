@@ -22,7 +22,7 @@ def _empty():
     return pd.DataFrame(columns=["Close"], index=pd.DatetimeIndex([], name="date"), dtype=float)
 
 
-#download vix data from yahoo finance, retrying on failure. returns a dataframe with the same structure as the cached vix data
+#download vix data from yahoo finance, retry when failure. returns a dataframe with the same structure as the cached vix data
 def download_vix(start, end=None, retries=3, pause=2.0):
     for attempt in range(retries):
         try:

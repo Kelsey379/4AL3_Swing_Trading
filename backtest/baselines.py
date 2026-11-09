@@ -6,8 +6,7 @@ from backtest.metrics import TRADING_DAYS, daily_returns, summarize
 # baselines the model has to beat:
 #  buy and hold = just own spy/qqq (or every ticker equal weight) the whole time
 #  unfiltered detector = take every setup, no model. if xgb cant beat this the model isnt adding anything
-# R isnt comparable to % so detector gets turned into % w/ fixed risk per trade (risk=0.01 -> 1R = 1% of acct)
-# simple version, rishi's trade sim should replace the R -> % part once its in
+# R isnt comparable to % so detector gets turned into % w fixed risk per trade (risk=0.01 -> 1R = 1% of acct)
 
 
 def daily_closes(bars): # last close each day from 4h bars, naive dates
