@@ -93,27 +93,27 @@ Due to this, we are not aiming for a super accurate model. We are aiming for one
 
 \citet{krauss2017deep} used neural networks, gradient-boosting trees and random forest to predict which S\&P 500 stocks would do better than the median the next day, based on past returns. Gradient-boosting trees performed similar to the other two methods, and results shrank in later years and with transaction costs. Like ours, their project uses tree-based methods to screen a large group of liquid stocks for short-term trades, but our model is tested across several time windows rather than one test period.
 
-We use a version of the triple barrier method from \citet{lopezdeprado2018advances}, where each trade is classified by whether it reaches the target, a stop-loss or a time limit. The book also explains why standard k-fold cross validation results in leakage in finance datasets, since labels from overlapping trades depend on one another, so we use walk-forward splits to train on past data only. Our project differs as we use a rule-detector and meta-labeling, where the model chooses whether to take each long trade.
+In our work, we modified the triple barrier model made by \citet{lopezdeprado2018advances}, which classifies based on whether they reach a target, stop-loss, or time barrier. The book explains that k-fold cross-validation often has leaks in financial datasets due to the dependency between labels of overlapping transactions, so we use walk-forward splitting to train our model on historical data only. Our project is also different in that we use a rule detector and meta-labeling rather than having the model select long trades directly.
 
 Rhea will add her part today!!!
 
 \section{Dataset}
 
-\paragraph{Data sources:} This project uses hourly OHLCV data from Yahoo Finance and the yfinance library for 76 US stocks, plus SPY and QQQ as benchmark indices. The 76 tickers are split into three groups -- group 1 consists of technology stocks, group 2 is media, real-estate, and industrial businesses, and group 3 has finance, energy and healthcare stocks. We've extracted the maximum amount of data points, which includes a 665-day window with a 60-day warmup for the indicators. We also get macro data from two other sources: Yahoo's daily VIX closes and the GDELT 2.0 database, which is compiled into hourly news counts and tone using Google BigQuery.
+\paragraph{Data sources:} We use hourly OHLCV data from Yahoo Finance, the yfinance library for 76 US stocks, and SPY and QQQ as benchmark indices. The 76 tickers are split into three groups -- group 1 consists of technology stocks, group 2 is media, real-estate, and industrial businesses, and group 3 has finance, energy and healthcare stocks. We've extracted the maximum amount of data points, which includes a 665-day window with a 60-day warmup for the indicators. We also get macro data from two other sources: Yahoo's daily VIX closes and the GDELT 2.0 database, which is compiled into hourly news counts and tone using Google BigQuery.
 
-\paragraph{Preprocessing:} We store hourly bars locally, then resample them to two bars per trading day -- one in the morning and one in the afternoon, while dropping any bars that are still in progress. We then flag any invalid OHLCV values, and remove any price jumps of over 20\% or days with only one bar, to avoid corrupting our data.
+\paragraph{Preprocessing:} We store hourly bars locally, then resample them to two bars per trading day, one in the morning and one in the afternoon, while dropping any bars that are still in progress. To make sure our data stays clean, we flag invalid OHLCV values and remove any price jumps of over 20\% or days with only one bar.
 
 \paragraph{Setup detection:} Each setup is a long moving average pullback, detected using a rule-based detector on the 4-hour bars. To be considered a valid setup, the following must be present:
 \begin{itemize}
-  \item An uptrend, where the close and EMA20 are both above the SMA50 and the SMA50 is ascending in the last 10 bars.
-  \item A pullback, where the recent low is within 0.5\% of the EMA20 in the last 3 bars and the RSI(14) is $\leq 55$.
-  \item A bounce, where the close of the signal bar is above EMA20 and above the previous bar's high.
+  \item An uptrend, where the close and EMA20 are both above the SMA50 and the SMA50 is ascending in the last 10 bars
+  \item A pullback, wich RSI(14) is $\leq 55$ and where the recent low is within 0.5\% of the EMA20 in the last 3 bars
+  \item A bounce,  with the signal bar being above EMA20 and above the previous bar's high.
 \end{itemize}
 A trade entry is done on the next bar's opening, and there can only be one position per ticker, so new setups are ignored until the current trade is complete.
 
-\paragraph{Labeling:} Setups are then labeled using the triple-barrier technique \citep{lopezdeprado2018advances}. A stop is placed about $1.5\times$ATR below the entry, and the target $3\times$ATR above it, with a limit of about 10 bars or 5 trading days. We then label setups as wins (1) if the target is hit, and time exits and stop-losses as losses (0). Setups whose trades have not finished yet get no label and are left out of training. Each trade's return is given as a value R, which is used for backtesting. When both the stop and target are within the same 4-hour bar, the hourly bar determines the first hit, otherwise the trade loses, but there were no such cases in our sample.
+\paragraph{Labeling:} Setups are then labeled using the triple-barrier technique \citep{lopezdeprado2018advances}. A stop is put 1.5×ATR below the entry, while the target is 3×ATR above it without exceeding 10 bars or 5 days in length. Setups are considered wins (1) if the target is hit, while time exits and stop losses are counted as losses (0). Incomplete trades are not labelled and excluded from the model training dataset. Every trade returns a value of $R = (\text{exit} - \text{entry}) / (\text{entry} - \text{stop})$, which will be used in backtesting. If both the stop and the target are reached in one 4-hour bar, the winner is determined by the hourly bar, however this was not necessary for our sample.
 
-\paragraph{Dataset properties:} The detector produced 1,314 setups across the 76 tickers (74 of them had at least one setup) from January 13, 2025 through November 2, 2026. Of those, 1,306 were labeled and 8 were open. Only 21.9\% of setups hit the target, 44.6\% hit the stop, and 33.5\% expired without meeting either, so the classes are imbalanced. Since time exits can be profitable, 46.6\% of trades were profitable. The average trade returned $+0.151$R, while the median is $-0.19$R: most trades lose a little and a few $+2$R targets raise the average. The average trade duration is 6.8 bars, and 14.8\% of all setups triggered on the afternoon bar. Group 2 is notably weaker than the other groups (Table~\ref{tab:groups}). Sorted by signal time, the setups are split into 1,038 training setups and 268 test setups (June 23 through October 30, 2026).
+\paragraph{Dataset properties:} A total of 1,314 setups were generated from the 76 tickers for the period of January 13, 2025 to November 2, 2026. Out of the 1,314 setups, 1,306 setups were labeled, and only 8 were open. Out of the 1,306 setups that were labeled, 21.9\%, 44.6\% and 33.5\% achieved their target, stopped or expired, respectively, showing that some classes are imbalanced. Overall, 46.6\% of trades were profitable, with an average profit/loss per trade of $+0.151$R and the median profit/loss is $-0.19$R. The average duration of a trade is 6.8 bars, and 14.8\% of setups triggered during the afternoon bar. Group 2 has relatively poor performance compared to other groups (Table~\ref{tab:groups}). In order of signal time, the setups are sorted into 1,038 training setups and 268 test setups (June 23 through October 30, 2026).
 
 \begin{table}[t]
   \centering
@@ -129,13 +129,13 @@ A trade entry is done on the next bar's opening, and there can only be one posit
     Avg R per trade & 0.233  & 0.022  & 0.174  & 0.151  \\
     \hline
   \end{tabular}
-  \caption{Detector setups and outcomes for each ticker group.}
+  \caption{Detector setups and outcomes for ticker groups}
   \label{tab:groups}
 \end{table}
 
 \section{Features}
 
-Each setup is one row of data with 21 features. They go straight into the tree models, with no embeddings or neural network. Stock prices vary a lot, so every price-based turns into a percentage or ratio. This is so all tickers are on the same scale.
+Each setup is one row of data with 21 features, which are put into tree models, without embeddings or neural networks. Stock prices vary a lot, so each is converted into a percentage or ratio so that all tickers are on the same scale.
  
 \paragraph{Detector features:}
 \begin{itemize}
@@ -324,38 +324,6 @@ Write about your plans for the remainder of the project. This should include a d
 % are all defined with the \verb|\label{label}| command and cross references
 % to them are made with the \verb|\ref{label}| command.
 % This an example cross-reference to Equation~\ref{eq:example}. You can also write equations inline, like this: $A=\pi r^2$.
-
-\section*{Equations}
-
-\textbf{1. Return in R.} The return of each trade is measured in R, which is its profit divided by the amount risked:
-\begin{equation}
-R = \frac{\text{exit price} - \text{entry price}}{\text{entry price} - \text{stop price}},
-\end{equation}
-\begin{equation}
-\text{stop price} = \text{entry price} - 1.5 \times \text{ATR},
-\end{equation}
-where ATR is the average true range. A stop exit is therefore about $-1$R and a target exit about $+2$R.
-
-\textbf{2. Purging.} To prevent leakage, a training setup is kept only if its trade closed before the evaluation window starts, minus an embargo of 3 days:
-\begin{equation}
-t_{\text{exit}} < t_{\text{eval start}} - 3\ \text{days}.
-\end{equation}
-
-\textbf{3. Sharpe ratio.} The Sharpe ratio is computed on daily R totals, where days with no exits count as 0, and is annualized over 252 trading days:
-\begin{equation}
-\text{Sharpe} = \frac{\overline{R}_{\text{daily}}}{\sigma_{R,\text{daily}}} \times \sqrt{252}.
-\end{equation}
-
-\textbf{4. Maximum drawdown.} The maximum drawdown is the largest drop of the cumulative R curve below its previous peak. Trades that close at the same time are added together first, so the result does not depend on row order. With $C(t)$ as the cumulative R at time $t$:
-\begin{equation}
-\text{MDD} = \max_{t} \left( \max_{s \le t} C(s) - C(t) \right).
-\end{equation}
-
-\textbf{5. True skill statistic.} Because wins are rare, we report the true skill statistic (TSS) instead of accuracy:
-\begin{equation}
-\text{TSS} = \frac{TP}{TP + FN} - \frac{FP}{FP + TN}.
-\end{equation}
-TSS is 0 for random guessing and 1 for a perfect classifier.
 
 \section*{Limitations}
 
