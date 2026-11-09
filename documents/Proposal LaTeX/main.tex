@@ -17,6 +17,7 @@
 \usepackage{microtype}
 \usepackage{inconsolata}
 \usepackage{graphicx}
+\usepackage{amsmath}
 \graphicspath{{../../data/plots/}{../../data/plots/lgbm/}}
 
 % If the title and author information does not fit in the area allocated, uncomment the following
@@ -29,7 +30,7 @@
 
 
 \author{Kelsey Rough, Rishi Dhanwantari, Rhea Gokhale \\
-  \texttt{\{macid1,macid2,gokhaler\}@mcmaster.ca} }
+  \texttt{\{roughk,macid2,gokhaler\}@mcmaster.ca} }
 
 %\author{
 %  \textbf{First Author\textsuperscript{1}},
@@ -90,11 +91,47 @@ This problem is difficult for 3 reasons:
 Due to this, we are not aiming for a super accurate model. We are aiming for one that is correct and does not leak. The project is a success if filtering setups with the model gives better trading results than taking every setup the detector finds or than just buying and holding.
 \section{Related Work}
 
+\citet{krauss2017deep} used neural networks, gradient-boosting trees and random forest to predict which S\&P 500 stocks would do better than the median the next day, based on past returns. Gradient-boosting trees performed similar to the other two methods, and results shrank in later years and with transaction costs. Like ours, their project uses tree-based methods to screen a large group of liquid stocks for short-term trades, but our model is tested across several time windows rather than one test period.
+
+We use a version of the triple barrier method from \citet{lopezdeprado2018advances}, where each trade is classified by whether it reaches the target, a stop-loss or a time limit. The book also explains why standard k-fold cross validation results in leakage in finance datasets, since labels from overlapping trades depend on one another, so we use walk-forward splits to train on past data only. Our project differs as we use a rule-detector and meta-labeling, where the model chooses whether to take each long trade.
+
 Rhea will add her part today!!!
 
 \section{Dataset}
 
-You should write about your dataset here, following the guidelines regarding item 1. This section may be 0.5-1 pages. Depending on your specific dataset, you may want to include subsections for the preprocessing, annotation, etc.
+\paragraph{Data sources:} This project uses hourly OHLCV data from Yahoo Finance and the yfinance library for 76 US stocks, plus SPY and QQQ as benchmark indices. The 76 tickers are split into three groups -- group 1 consists of technology stocks, group 2 is media, real-estate, and industrial businesses, and group 3 has finance, energy and healthcare stocks. We've extracted the maximum amount of data points, which includes a 665-day window with a 60-day warmup for the indicators. We also get macro data from two other sources: Yahoo's daily VIX closes and the GDELT 2.0 database, which is compiled into hourly news counts and tone using Google BigQuery.
+
+\paragraph{Preprocessing:} We store hourly bars locally, then resample them to two bars per trading day -- one in the morning and one in the afternoon, while dropping any bars that are still in progress. We then flag any invalid OHLCV values, and remove any price jumps of over 20\% or days with only one bar, to avoid corrupting our data.
+
+\paragraph{Setup detection:} Each setup is a long moving average pullback, detected using a rule-based detector on the 4-hour bars. To be considered a valid setup, the following must be present:
+\begin{itemize}
+  \item An uptrend, where the close and EMA20 are both above the SMA50 and the SMA50 is ascending in the last 10 bars.
+  \item A pullback, where the recent low is within 0.5\% of the EMA20 in the last 3 bars and the RSI(14) is $\leq 55$.
+  \item A bounce, where the close of the signal bar is above EMA20 and above the previous bar's high.
+\end{itemize}
+A trade entry is done on the next bar's opening, and there can only be one position per ticker, so new setups are ignored until the current trade is complete.
+
+\paragraph{Labeling:} Setups are then labeled using the triple-barrier technique \citep{lopezdeprado2018advances}. A stop is placed about $1.5\times$ATR below the entry, and the target $3\times$ATR above it, with a limit of about 10 bars or 5 trading days. We then label setups as wins (1) if the target is hit, and time exits and stop-losses as losses (0). Setups whose trades have not finished yet get no label and are left out of training. Each trade's return is given as a value R, which is used for backtesting. When both the stop and target are within the same 4-hour bar, the hourly bar determines the first hit, otherwise the trade loses, but there were no such cases in our sample.
+
+\paragraph{Dataset properties:} The detector produced 1,314 setups across the 76 tickers (74 of them had at least one setup) from January 13, 2025 through November 2, 2026. Of those, 1,306 were labeled and 8 were open. Only 21.9\% of setups hit the target, 44.6\% hit the stop, and 33.5\% expired without meeting either, so the classes are imbalanced. Since time exits can be profitable, 46.6\% of trades were profitable. The average trade returned $+0.151$R, while the median is $-0.19$R: most trades lose a little and a few $+2$R targets raise the average. The average trade duration is 6.8 bars, and 14.8\% of all setups triggered on the afternoon bar. Group 2 is notably weaker than the other groups (Table~\ref{tab:groups}). Sorted by signal time, the setups are split into 1,038 training setups and 268 test setups (June 23 through October 30, 2026).
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{lrrrr}
+    \hline
+    & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{All} \\
+    \hline
+    Tickers         & 26     & 25     & 25     & 76     \\
+    Setups          & 460    & 382    & 472    & 1,314  \\
+    Hit target      & 24.6\% & 15.4\% & 24.5\% & 21.9\% \\
+    Profitable      & 48.5\% & 42.7\% & 47.0\% & 46.6\% \\
+    Avg R per trade & 0.233  & 0.022  & 0.174  & 0.151  \\
+    \hline
+  \end{tabular}
+  \caption{Detector setups and outcomes for each ticker group.}
+  \label{tab:groups}
+\end{table}
 
 \section{Features}
 
@@ -249,50 +286,93 @@ Over the full history, the unfiltered detector averaged $+0.157$R per trade over
 
 Write about your plans for the remainder of the project. This should include a discussion of the feedback you received from your TA, and how you plan to improve your approach. Reflect on your implementation and areas for improvement. Refer to item 6. This may be around 0.5 pages.
 
-\section{Template Notes}
+% Commented these out so they dont fill the pdf - kelsey
+% \section{Template Notes}
+%
+% You can remove this section or comment it out, as it only contains instructions for how to use this template. You may use subsections in your document as you find appropriate.
+%
+% \subsection{Tables and figures}
+%
+% See Figure~\ref{fig:experiments} for an example of a figure and its caption.
+%
+%
+% \begin{figure}[t]
+%   \includegraphics[width=\columnwidth]{example-image-golden}
+%   \caption{A figure with a caption that runs for more than one line.
+%     Example image is usually available through the \texttt{mwe} package
+%     without even mentioning it in the preamble.}
+%   \label{fig:experiments}
+% \end{figure}
+%
+% \begin{figure*}[t]
+%   \includegraphics[width=0.48\linewidth]{example-image-a} \hfill
+%   \includegraphics[width=0.48\linewidth]{example-image-b}
+%   \caption {A minimal working example to demonstrate how to place
+%     two images side-by-side.}
+% \end{figure*}
+%
+%
+% \subsection{Equations}
+%
+% An example equation is shown below:
+% \begin{equation}
+%   \label{eq:example}
+%   A = \pi r^2
+% \end{equation}
+%
+% Labels for equation numbers, sections, subsections, figures and tables
+% are all defined with the \verb|\label{label}| command and cross references
+% to them are made with the \verb|\ref{label}| command.
+% This an example cross-reference to Equation~\ref{eq:example}. You can also write equations inline, like this: $A=\pi r^2$.
 
-You can remove this section or comment it out, as it only contains instructions for how to use this template. You may use subsections in your document as you find appropriate.
+\section*{Equations}
 
-\subsection{Tables and figures}
-
-See Figure~\ref{fig:experiments} for an example of a figure and its caption.
-
-
-\begin{figure}[t]
-  \includegraphics[width=\columnwidth]{example-image-golden}
-  \caption{A figure with a caption that runs for more than one line.
-    Example image is usually available through the \texttt{mwe} package
-    without even mentioning it in the preamble.}
-  \label{fig:experiments}
-\end{figure}
-
-\begin{figure*}[t]
-  \includegraphics[width=0.48\linewidth]{example-image-a} \hfill
-  \includegraphics[width=0.48\linewidth]{example-image-b}
-  \caption {A minimal working example to demonstrate how to place
-    two images side-by-side.}
-\end{figure*}
-
-
-\subsection{Equations}
-
-An example equation is shown below:
+\textbf{1. Return in R.} The return of each trade is measured in R, which is its profit divided by the amount risked:
 \begin{equation}
-  \label{eq:example}
-  A = \pi r^2
+R = \frac{\text{exit price} - \text{entry price}}{\text{entry price} - \text{stop price}},
+\end{equation}
+\begin{equation}
+\text{stop price} = \text{entry price} - 1.5 \times \text{ATR},
+\end{equation}
+where ATR is the average true range. A stop exit is therefore about $-1$R and a target exit about $+2$R.
+
+\textbf{2. Purging.} To prevent leakage, a training setup is kept only if its trade closed before the evaluation window starts, minus an embargo of 3 days:
+\begin{equation}
+t_{\text{exit}} < t_{\text{eval start}} - 3\ \text{days}.
 \end{equation}
 
-Labels for equation numbers, sections, subsections, figures and tables
-are all defined with the \verb|\label{label}| command and cross references
-to them are made with the \verb|\ref{label}| command.
-This an example cross-reference to Equation~\ref{eq:example}. You can also write equations inline, like this: $A=\pi r^2$.
+\textbf{3. Sharpe ratio.} The Sharpe ratio is computed on daily R totals, where days with no exits count as 0, and is annualized over 252 trading days:
+\begin{equation}
+\text{Sharpe} = \frac{\overline{R}_{\text{daily}}}{\sigma_{R,\text{daily}}} \times \sqrt{252}.
+\end{equation}
 
+\textbf{4. Maximum drawdown.} The maximum drawdown is the largest drop of the cumulative R curve below its previous peak. Trades that close at the same time are added together first, so the result does not depend on row order. With $C(t)$ as the cumulative R at time $t$:
+\begin{equation}
+\text{MDD} = \max_{t} \left( \max_{s \le t} C(s) - C(t) \right).
+\end{equation}
 
-% \section*{Limitations}
+\textbf{5. True skill statistic.} Because wins are rare, we report the true skill statistic (TSS) instead of accuracy:
+\begin{equation}
+\text{TSS} = \frac{TP}{TP + FN} - \frac{FP}{FP + TN}.
+\end{equation}
+TSS is 0 for random guessing and 1 for a perfect classifier.
+
+\section*{Limitations}
+
+One limitation is that the Yahoo data covers only two years, which means we have a single market condition, an uptrend. The test period was also short (approximately 90 days with 268 setups), so the margin of error is big, as we have ROC-AUC 95\% confidence intervals of approximately $\pm$0.08. To account for this, we backtested the whole history of the stocks and got about 1,000 out-of-sample predictions. We did not account for commissions, slippage, or position limits, and set the risk per setup to 1R, which is 1\% of the account in the backtest. We chose 76 tickers, considering the availability of Yahoo Finance and GDELT data, which may bias the samples towards stocks that are more often covered by these sources. We also considered several combinations of features, target values, and models, which increases the risk of a multiple comparison problem, where a model may appear statistically significant even if it is not.
 
 \section*{Team Contributions}
 
-Write in this section a few sentences describing the contributions of each team member. What did each member work on? Refer to item 7.
+Below is a summary of each team member's work since the proposal:
+
+Kelsey set up the GitHub repository, implemented the OHLCV data pull and resampling to 4-hour bars, wrote the setup detector and triple barrier labeler, and wrote the tests for them. Kelsey also implemented the shared leakage detection, which was run on all of the macro features. She also trained and tuned XGBoost on a purged time split, including the full-history evaluation step, the backtest metrics such as win rate, Sharpe ratio, and maximum drawdown, and the result visualization including the dashboard for per-setup model scores.
+
+Rishi created the GDELT and VIX macro data pipeline using BigQuery aggregation, caching, and macro features, and merged them with setups. He also wrote the macro leakage check script, and completed the LightGBM training.
+
+Rhea set up access to the GDELT dataset through BigQuery, implemented an indicator library (including EMA, SMA, ATR, RSI, and MACD), implemented technical features such as MACD, volatility, volume and their leakage checks. She was also responsible for dataset compilation and cleaning, detector output comparison for ticker groups and definition of baseline strategies such as the buy-and-hold and the unfiltered detector.
+
+% Custom bibliography entries only
+\bibliography{custom}
 
 
 % \appendix
