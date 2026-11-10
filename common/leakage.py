@@ -9,9 +9,7 @@ def check_feature_times(setups, feats, time_col, key="setup_id"): # every featur
     if len(bad):
         raise ValueError(f"{len(bad)} feature rows use data from at/after bar close, e.g. {bad[key].iloc[0]}")
     return len(m)
-
-
-def check_truncation(build_fn, data, setups, cutoffs, time_col): # rebuilding w/ future data cut off cant change older rows
+def check_truncation(build_fn, data, setups, cutoffs, time_col): # rebuilding w/ future data cut off can't change older rows
     
     full =build_fn(data, setups).set_index("setup_id").sort_index()
     
