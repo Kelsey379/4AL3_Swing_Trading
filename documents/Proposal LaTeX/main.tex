@@ -30,7 +30,7 @@
 
 
 \author{Kelsey Rough, Rishi Dhanwantari, Rhea Gokhale \\
-  \texttt{\{roughk,macid2,gokhaler\}@mcmaster.ca} }
+  \texttt{\{roughk,dhanwanr,gokhaler\}@mcmaster.ca} }
 
 %\author{
 %  \textbf{First Author\textsuperscript{1}},
@@ -94,6 +94,8 @@ Due to this, we are not aiming for a super accurate model. We are aiming for one
 \citet{krauss2017deep} used neural networks, gradient-boosting trees and random forest to predict which S\&P 500 stocks would do better than the median the next day, based on past returns. Gradient-boosting trees performed similar to the other two methods, and results shrank in later years and with transaction costs. Like ours, their project uses tree-based methods to screen a large group of liquid stocks for short-term trades, but our model is tested across several time windows rather than one test period.
 
 In our work, we modified the triple barrier model made by \citet{lopezdeprado2018advances}, which classifies based on whether they reach a target, stop-loss, or time barrier. The book explains that k-fold cross-validation often has leaks in financial datasets due to the dependency between labels of overlapping transactions, so we use walk-forward splitting to train our model on historical data only. Our project is also different in that we use a rule detector and meta-labeling rather than having the model select long trades directly.
+
+\citet{zhuang2025machine} investigated the use of machine learning to identify customers who are likely to leave a bank. It evaluated eleven different machine learning models, including XGBoost, CatBoost, and LightGBM, using various data split ratios and sampling methods to address class imbalance. The research emphasized recall as its primary evaluation metric and identified numerous important predictors of churn. Like our project, it uses supervised machine learning, feature engineering, and gradient-boosting algorithms to predict binary outcomes while addressing class imbalance, but the two differ overall in terms of objective and application.
 
 Rhea will add her part today!!!
 
@@ -183,7 +185,15 @@ Each setup is one row of data with 21 features, which are put into tree models, 
 
 \section{Implementation}
 
-Describe your model and implementation here. Refer to item 4. This may take around a page.
+\paragraph{Model Description:} For our model, we use XGBoost and LightGBM. This section will primarily focus on XGBoost (for clarification on the status of LightGBM, please see the next paragraph). XGBoost, which is a gradient-boosted decision tree machine learning framework, is used to predict whether each moving-average pullback setup is a win or a loss. Every setup has 21 features: 6 detector features (RSI, ATR, distances to EMA and SMA, trend gap, and time of day), 7 technical features (derived from MACD, volatility, and volume), and 8 macro features (derived from GDELT and VIX news tone). The training loss is the logistic loss, also known as binary cross-entropy, with wins weighted by the ratio of losses to wins to offset class imbalance. The optimization technique is gradient boosting; each new tree is fit to the first and second derivatives of the loss and added to the ensemble with a learning rate shrinkage factor. Regularization is performed through row and column subsampling and shallow trees. Because of the weighting, outputs are scores rather than calibrated probabilities.
+
+\paragraph{LightGBM Status:} LightGBM, another gradient-boosting framework, is implemented in the project using the same data, split, features, loss weighting, purging and metrics as XGBoost, plus its own 36-setting grid over number of leaves, learning rate, number of trees and minimum leaf size. The similarities in implementation are intended to provide a meaningful comparison to XGBoost results. However, while the code for its use exists, LightGBM has not yet been trained on any data, meaning that it cannot provide any results at this point. LightGBM results are expected to be included in a final project report.
+
+\paragraph{Tuning Hyperparameters:} For tuning  of hyperparameters, we searched a 24-setting grid with tree depth of 2, 3 or 4, learning rate of 0.03 or 0.1, 100 or 300 trees, and a minimum child weight of 5 or 20. Each setting was scored by mean PR-AUC over expanding-window walk-forward folds in the training data. PR-AUC was used because of its fit for imbalanced labels.
+
+\paragraph{Baseline and Results:} The classification baselines are comparing against majority vote and chance. For trading, we compare against taking every setup the detector finds, the success criterion of our proposal, and against buy-and-hold of SPY, QQQ and an equal-weight basket of all stocks.The baseline of majority vote reaches 77.8 percent accuracy on the test set (207 losses out of 266 predictions). At a threshold of 0.5, XGBoost reaches 56.4 percent accuracy, with the difference indicating that accuracy on its own is uninformative. As a consequence, we compared precision and AUC with their chance levels. Precision was 20.6 percent (slightly below the 22 percent base rate), recall was 33.9 percent, and the true skill statistic was about -0.03. Test ROC-AUC was around 0.476 against 0.5 for chance. Taking every setup earned roughly +0.10 R per trade over the test period against roughly +0.05 R for the 97 setups the model picked. Buy-and-hold SPY and QQQ returned 0.03 and -0.0322 over the same dates, respectively. A walk-forward evaluation, which retrains before each of seven windows and produces about 1,000 out-of-sample predictions, gives per-window ROC-AUC between about 0.39 and 0.65, centred on 0.5. With the current features, the model thus cannot be seen to give any reliable signal, which is consistent with the noise anticipated in the project proposal.
+
+\paragraph{Ablation:} To see which feature groups are most relevant, we repeated the walk-forward evaluation with detector features only, detector plus technical, detector plus macro, and all features. None stayed above chance across all windows. Detector plus macro proved best in three of the middle windows (ROC-AUC 0.56 to 0.64) but fell below 0.5 in others. Pooled over all 1,015 predictions, ROC-AUC is 0.513 (95 percent interval 0.470 to 0.555) for detector only, 0.502 (0.458 to 0.546) with technical features, 0.517 (0.474 to 0.561) with macro features and 0.519 (0.474 to 0.562) with all features, so every interval includes 0.5.We also tested relative-strength features (each stock against SPY and against the other tickers) and dropped them because they did not help. Feature importances are flat, with macro features generally being best. Since macro values are identical for all setups at the same moment, this reflects how the trees split the data and is not evidence that these features predict outcomes.
 
 \section{Results and Evaluation}
 
