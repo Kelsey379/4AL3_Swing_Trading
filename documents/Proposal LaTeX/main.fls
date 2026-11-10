@@ -244,12 +244,12 @@ INPUT ..\..\data\plots\equity_curve.png
 INPUT ..\..\data\plots\equity_curve.png
 INPUT ..\..\data\plots\equity_curve.png
 INPUT ..\..\data\plots\equity_curve.png
-INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr8t.vf
-INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
 INPUT .\main.bbl
 INPUT .\main.bbl
 INPUT main.bbl
 INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmri8t.tfm
+INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr8t.vf
+INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
 INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmri8t.vf
 INPUT C:\Users\rishi.dhanwantari\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmri8r.tfm
 INPUT main.aux

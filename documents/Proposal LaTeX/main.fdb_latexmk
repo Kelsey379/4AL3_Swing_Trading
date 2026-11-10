@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1794328910.77938 "main.aux" "main.bbl" "main" 1794329350.69808 0
+["bibtex main"] 1794349805.89384 "main.aux" "main.bbl" "main" 1794350245.34897 0
   "./acl_natbib.bst" 1794263831 47126 3d1af46d62cc9172ef6e42b56c1cd613 ""
   "./custom.bib" 1794328556 6345 517bba0f3cbff4e6612e820481a926d6 ""
-  "main.aux" 1794329350 5491 e820d0d6ba4390950e6c75c59717c293 "pdflatex"
+  "main.aux" 1794350244 5840 5e98add4f6b2f7577977d2e51244e77c "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1794329348.98599 "c:/Users/rishi.dhanwantari/Documents/4AL3_Swing_Trading/documents/Proposal LaTeX/main.tex" "main.pdf" "main" 1794329350.69941 0
+["pdflatex"] 1794350243.87736 "c:/Users/rishi.dhanwantari/Documents/4AL3_Swing_Trading/documents/Proposal LaTeX/main.tex" "main.pdf" "main" 1794350245.34968 0
   "../../data/plots/equity_curve.png" 1794263831 153471 e1fd382fda6d6b1735fb6e8c1d2f2fcb ""
   "../../data/plots/wf_roc_by_window_gall_compare.png" 1794263831 95539 13870985ef0c2c069dc997bf6c8c2d6f ""
   "C:/Users/rishi.dhanwantari/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1794272561 96176 40a8022d15c5925d7081b1ad66e03248 ""
@@ -132,11 +132,11 @@
   "C:/Users/rishi.dhanwantari/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1729265222 55384 b454dec21c2d9f45ec0b793f0995b992 ""
   "C:/Users/rishi.dhanwantari/AppData/Local/Programs/MiKTeX/tex/latex/xkeyval/xkeyval.sty" 1656236919 4937 4ce600ce9bd4ec84d0250eb6892fcf4f ""
   "acl.sty" 1794263831 11927 e2c027f483aa40e577ed34264c8b0655 ""
-  "c:/Users/rishi.dhanwantari/Documents/4AL3_Swing_Trading/documents/Proposal LaTeX/main.tex" 1794329348 29797 1f3b12ee002f65d7fcaabf26f56ebc78 ""
-  "main.aux" 1794329350 5491 e820d0d6ba4390950e6c75c59717c293 "pdflatex"
-  "main.bbl" 1794328910 2189 f1b731832885b778d1604ffb1d717c22 "bibtex main"
-  "main.out" 1794329350 781 3b8e3adb22f4d217c9de254831486270 "pdflatex"
-  "main.tex" 1794329348 29797 1f3b12ee002f65d7fcaabf26f56ebc78 ""
+  "c:/Users/rishi.dhanwantari/Documents/4AL3_Swing_Trading/documents/Proposal LaTeX/main.tex" 1794350243 31695 a1f77a34eea785468669e07e7a7ed920 ""
+  "main.aux" 1794350244 5840 5e98add4f6b2f7577977d2e51244e77c "pdflatex"
+  "main.bbl" 1794349806 2189 f1b731832885b778d1604ffb1d717c22 "bibtex main"
+  "main.out" 1794350244 781 3b8e3adb22f4d217c9de254831486270 "pdflatex"
+  "main.tex" 1794350243 31695 a1f77a34eea785468669e07e7a7ed920 ""
   (generated)
   "main.aux"
   "main.log"
