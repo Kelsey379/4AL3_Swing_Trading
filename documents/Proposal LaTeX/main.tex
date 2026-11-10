@@ -97,7 +97,9 @@ In our work, we modified the triple barrier model made by \citet{lopezdeprado201
 
 \citet{zhuang2025machine} investigated the use of machine learning to identify customers who are likely to leave a bank. It evaluated eleven different machine learning models, including XGBoost, CatBoost, and LightGBM, using various data split ratios and sampling methods to address class imbalance. The research emphasized recall as its primary evaluation metric and identified numerous important predictors of churn. Like our project, it uses supervised machine learning, feature engineering, and gradient-boosting algorithms to predict binary outcomes while addressing class imbalance, but the two differ overall in terms of objective and application.
 
-Rhea will add her part today!!!
+\citet{basak2019predicting} used random forests and XGBoost to predict whether a stock's price would rise or fall compared to its price a certain number of days earlier. Technical indicators like RSI and MACD were used as features, and the study showed high accuracy for medium to long-term predictions. Like our project, they used technical indicators as inputs to tree-based models, but we use them for individual pullback setups on 4-hour bars rather than to fixed-horizon direction, and our model did not find a reliable signal.
+
+\citet{tetlock2007giving} measured the pessimism of a daily Wall Street Journal column and found that high pessimism predicted lower market prices, and then a return to normal levels. The study concluded that media tone reflects investor sentiment rather than actual new information about the value of companies. It uses the tone of news as a signal for market movement, whereas we use GDELT tone across many news sources rather than a single column. We use it as a feature for classifying trades instead of for for predicting market returns directly.
 
 \section{Dataset}
 

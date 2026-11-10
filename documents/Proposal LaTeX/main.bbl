@@ -1,0 +1,48 @@
+\begin{thebibliography}{6}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Basak et~al.(2019)Basak, Kar, Saha, Khaidem, and
+  Dey}]{basak2019predicting}
+Suryoday Basak, Saibal Kar, Snehanshu Saha, Luckyson Khaidem, and Sudeepa~Roy
+  Dey. 2019.
+\newblock \href {https://doi.org/10.1016/j.najef.2018.06.013} {Predicting the
+  direction of stock market prices using tree-based classifiers}.
+\newblock \emph{The North American Journal of Economics and Finance},
+  47:552--567.
+
+\bibitem[{{Devera Team}(2026)}]{devera2026aienergy}
+{Devera Team}. 2026.
+\newblock \href
+  {https://devera.ai/resources/environmental-impact-ai-energy-carbon/} {{AI}
+  water \& energy usage: {ChatGPT} vs {Claude} vs {Gemini} (2026)}.
+\newblock Devera.
+\newblock Accessed Oct. 6, 2026.
+
+\bibitem[{Krauss et~al.(2017)Krauss, Do, and Huck}]{krauss2017deep}
+Christopher Krauss, Xuan~Anh Do, and Nicolas Huck. 2017.
+\newblock \href {https://doi.org/10.1016/j.ejor.2016.10.031} {Deep neural
+  networks, gradient-boosted trees, random forests: Statistical arbitrage on
+  the {S\&P} 500}.
+\newblock \emph{European Journal of Operational Research}, 259(2):689--702.
+
+\bibitem[{L{\'o}pez~de Prado(2018)}]{lopezdeprado2018advances}
+Marcos L{\'o}pez~de Prado. 2018.
+\newblock \emph{Advances in Financial Machine Learning}.
+\newblock Wiley, Hoboken, NJ.
+
+\bibitem[{Tetlock(2007)}]{tetlock2007giving}
+Paul~C. Tetlock. 2007.
+\newblock \href {https://doi.org/10.1111/j.1540-6261.2007.01232.x} {Giving
+  content to investor sentiment: The role of media in the stock market}.
+\newblock \emph{The Journal of Finance}, 62(3):1139--1168.
+
+\bibitem[{Zhang et~al.(2025)Zhang, Wang, Li, and Wang}]{zhuang2025machine}
+Hanyuan Zhang, Yankai Wang, Zexuan Li, and Xiaoyin Wang. 2025.
+\newblock \href {https://doi.org/10.1145/3767052.3767054} {Machine learning
+  models for bank customer churn prediction: A comparative study of lightgbm,
+  catboost, and xgboost}.
+\newblock In \emph{Proceedings of the 2025 International Conference on Big
+  Data, Artificial Intelligence and Digital Economy}, BDAIE '25, page 6–16,
+  New York, NY, USA. Association for Computing Machinery.
+
+\end{thebibliography}
